@@ -22,7 +22,12 @@ type backend struct {
 func Backend() *backend {
 	var b backend
 	b.Backend = &framework.Backend{
-		Help:        strings.TrimSpace(backendHelp),
+		Help: strings.TrimSpace(backendHelp),
+		PathsSpecial: &logical.Paths{
+			SealWrapStorage: []string{
+				"config",
+			},
+		},
 		BackendType: logical.TypeLogical,
 	}
 	return &b
