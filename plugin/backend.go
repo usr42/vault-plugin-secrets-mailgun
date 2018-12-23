@@ -28,6 +28,11 @@ func Backend() *backend {
 				"config",
 			},
 		},
+		Paths: framework.PathAppend(
+			[]*framework.Path{
+				pathConfig(&b),
+			},
+		),
 		BackendType: logical.TypeLogical,
 	}
 	return &b
