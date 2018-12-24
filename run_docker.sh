@@ -21,3 +21,6 @@ vault secrets enable \
     -path="$SHORT_NAME" \
     -plugin-name="$SHORT_NAME" \
     plugin
+echo
+echo "To communicate with vault souce ./env:"
+echo ". ./env"
