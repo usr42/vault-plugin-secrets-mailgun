@@ -26,13 +26,37 @@
 
 
 [[constraint]]
-  name = "github.com/hashicorp/vault"
-  version = "1.0.1"
+  branch = "master"
+  name = "github.com/drhodes/golorem"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/facebookgo/ensure"
+
+[[constraint]]
+  name = "github.com/gobuffalo/envy"
+  version = "1.6.4"
+
+[[constraint]]
+  name = "github.com/onsi/ginkgo"
+  version = "1.6.0"
+
+[[constraint]]
+  name = "github.com/onsi/gomega"
+  version = "1.4.2"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/pkg/errors"
+
+[[constraint]]
+  name = "github.com/thrawn01/args"
+  version = "0.3.0"
+
+[[override]]
+  name = "gopkg.in/fsnotify.v1"
+  source = "https://github.com/fsnotify/fsnotify.git"
 
 [prune]
   go-tests = true
   unused-packages = true
-
-[[constraint]]
-  name = "github.com/mailgun/mailgun-go"
-  version = "2.0.0"
