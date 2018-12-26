@@ -25,7 +25,7 @@ func pathCredentials(b *backend) *framework.Path {
 		Operations: map[logical.Operation]framework.OperationHandler{
 			logical.ReadOperation: &framework.PathOperation{
 				Callback: b.generateCredentials,
-				Summary:  "TODO.",
+				Summary:  "Get mailgun SMTP username and password.",
 			},
 		},
 	}
@@ -99,6 +99,7 @@ func (b *backend) generateCredentials(ctx context.Context, req *logical.Request,
 		return nil, errwrap.Wrapf("Unable to create random password: {{err}}", err)
 	}
 
+	// TODO make user suffix length configurable
 	userSuffix, err := base62.Random(5, true)
 	if err != nil {
 		return nil, errwrap.Wrapf("Unable to create unique, random username: {{err}}", err)
@@ -113,7 +114,7 @@ func (b *backend) generateCredentials(ctx context.Context, req *logical.Request,
 	}
 
 	secretD := map[string]interface{}{
-		"username": username,
+		"username": fmt.Sprintf("%s@%s", username, config.Domain),
 		"password": password,
 	}
 	internalD := map[string]interface{}{
