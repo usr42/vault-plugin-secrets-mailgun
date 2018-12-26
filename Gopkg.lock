@@ -15,6 +15,14 @@
   revision = "803625baeddc3526d01d321b5066029f53eafc81"
 
 [[projects]]
+  branch = "master"
+  digest = "1:ef5b0622d834c139454148b8fd0c92bb314828900532b267ae62da9fec109866"
+  name = "github.com/armon/go-metrics"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "f0300d1749da6fa982027e449ec0c7a145510c3c"
+
+[[projects]]
   digest = "1:c47f4964978e211c6e566596ec6246c329912ea92e9bb99c00798bb4564c5b09"
   name = "github.com/armon/go-radix"
   packages = ["."]
@@ -159,10 +167,12 @@
   revision = "65a6292f0157eff210d03ed1bf6c59b190b8b906"
 
 [[projects]]
-  digest = "1:ae9aa1ecd2766141e77cf1406763476f55c0f5d003a1b80aafa4ab931f66d90a"
+  digest = "1:8eae2f1fda4d0c8c6f4f054e84d4c1d33865def1256bef41bb9918cbeec88f00"
   name = "github.com/hashicorp/vault"
   packages = [
     "api",
+    "builtin/logical/database/dbplugin",
+    "helper/base62",
     "helper/certutil",
     "helper/compressutil",
     "helper/consts",
@@ -185,6 +195,7 @@
     "logical/plugin/pb",
     "physical",
     "physical/inmem",
+    "plugins/helper/database/credsutil",
     "version",
   ]
   pruneopts = "UT"
@@ -360,6 +371,7 @@
     "github.com/hashicorp/vault/logical",
     "github.com/hashicorp/vault/logical/framework",
     "github.com/hashicorp/vault/logical/plugin",
+    "github.com/hashicorp/vault/plugins/helper/database/credsutil",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

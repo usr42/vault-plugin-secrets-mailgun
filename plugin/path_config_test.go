@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestBackend(t *testing.T) {
+func TestPathConfig(t *testing.T) {
 	t.Run("initial config is empty", func(t *testing.T) {
 		t.Parallel()
 		b, storage := testBackend(t)

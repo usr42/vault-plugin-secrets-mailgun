@@ -31,8 +31,12 @@ func Backend() *backend {
 		Paths: framework.PathAppend(
 			[]*framework.Path{
 				pathConfig(&b),
+				pathCredentials(&b),
 			},
 		),
+		Secrets: []*framework.Secret{
+			secretCredentials(&b),
+		},
 		BackendType: logical.TypeLogical,
 	}
 	return &b
