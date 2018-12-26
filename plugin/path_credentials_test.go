@@ -23,19 +23,6 @@ func TestPathCredentials(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		fmt.Println("Is lease enabled?", resp.Secret.LeaseEnabled())
-
-		jsonpp(resp)
-
-		resp, err = b.HandleRequest(context.Background(), &logical.Request{
-			Storage:   storage,
-			Operation: logical.ReadOperation,
-			Path:      "credentials",
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-
 		jsonpp(resp)
 	})
 }
