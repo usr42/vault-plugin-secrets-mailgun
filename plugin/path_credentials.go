@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/vault/logical/framework"
 	"github.com/hashicorp/vault/plugins/helper/database/credsutil"
 	"strings"
-	"time"
 )
 
 const (
@@ -50,10 +49,14 @@ func secretCredentials(b *backend) *framework.Secret {
 
 func (b *backend) secretCredentialsRenew(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	b.Logger().Info("Renewing credential", "username", req.Secret.InternalData[internalDataUser])
+	config, err := getConfig(ctx, req.Storage)
+	if ok, response, err := handleGetConfig(err, config); !ok {
+		return response, err
+	}
 	resp := logical.Response{}
 	resp.Secret = req.Secret
-	resp.Secret.TTL = 1 * time.Minute
-	resp.Secret.MaxTTL = 3 * time.Minute
+	resp.Secret.TTL = config.TTL
+	resp.Secret.MaxTTL = config.MaxTTL
 	return &resp, nil
 }
 
@@ -114,10 +117,8 @@ func (b *backend) generateCredentials(ctx context.Context, req *logical.Request,
 
 	secret := b.Secret(SecretTypeSmtpCredentials)
 	resp := secret.Response(secretD, internalD)
-	// TODO Use TTL and MaxTTL from config
-	// TODO Use same TTL values for renew
-	resp.Secret.TTL = 1 * time.Minute
-	resp.Secret.MaxTTL = 3 * time.Minute
+	resp.Secret.TTL = config.TTL
+	resp.Secret.MaxTTL = config.MaxTTL
 	resp.Secret.Renewable = true
 	return resp, nil
 }

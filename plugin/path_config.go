@@ -26,7 +26,10 @@ func pathConfig(b *backend) *framework.Path {
 			"ttl": {
 				Type:        framework.TypeDurationSecond,
 				Description: "The Time to live (TTL) of the generated credentials",
-				Default:     defaultTTL,
+			},
+			"max_ttl": {
+				Type:        framework.TypeDurationSecond,
+				Description: "The maximum Time to live (TTL) of the generated credentials",
 			},
 		},
 
@@ -57,8 +60,9 @@ func (b *backend) pathConfigRead(ctx context.Context, req *logical.Request, data
 
 	return &logical.Response{
 		Data: map[string]interface{}{
-			"domain": cfg.Domain,
-			"ttl":    cfg.TTL,
+			"domain":  cfg.Domain,
+			"ttl":     int64(cfg.TTL / time.Second),
+			"max_ttl": int64(cfg.MaxTTL / time.Second),
 		},
 	}, nil
 }
@@ -86,8 +90,15 @@ func (b *backend) pathConfigWrite(ctx context.Context, req *logical.Request, dat
 	domain := domainRaw.(string)
 	cfg.Domain = domain
 
-	ttlRaw := data.Get("ttl")
-	cfg.TTL = time.Duration(ttlRaw.(int)) * time.Second
+	// Update token TTL.
+	if ttlRaw, ok := data.GetOk("ttl"); ok {
+		cfg.TTL = time.Duration(ttlRaw.(int)) * time.Second
+	}
+
+	// Update token max TTL.
+	if maxTtlRaw, ok := data.GetOk("max_ttl"); ok {
+		cfg.MaxTTL = time.Duration(maxTtlRaw.(int)) * time.Second
+	}
 
 	client := b.MailgunFactory(domain, apiKey)
 	if !client.IsApiKeyValid() {
@@ -113,6 +124,7 @@ type config struct {
 	ApiKey string
 	Domain string
 	TTL    time.Duration
+	MaxTTL time.Duration
 }
 
 func getConfig(ctx context.Context, s logical.Storage) (*config, error) {

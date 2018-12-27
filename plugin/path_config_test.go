@@ -121,7 +121,7 @@ func TestPathConfig(t *testing.T) {
 		}
 	})
 
-	t.Run("config contains ttl", func(t *testing.T) {
+	t.Run("ttl not set, config contains zero ttl", func(t *testing.T) {
 		t.Parallel()
 		b, storage := testBackend(t)
 		config := storeDefaultConfig(t, b, storage)
@@ -132,14 +132,9 @@ func TestPathConfig(t *testing.T) {
 			t.Fatal("configuration", config, "was not saved.")
 		}
 
-		data := resp.Data
+		ttl := getTTL(resp.Data, t)
 
-		ttl, ok := data["ttl"]
-		if !ok {
-			t.Fatal("configuration does not contain ttl")
-		}
-
-		expectedTTL := 10 * time.Minute
+		expectedTTL := time.Duration(0)
 		if ttl != expectedTTL {
 			t.Error("ttl is not the default value. Expected:", expectedTTL, "Actual:", ttl)
 		}
@@ -161,18 +156,74 @@ func TestPathConfig(t *testing.T) {
 			t.Fatal("configuration", config, "was not saved.")
 		}
 
-		data := resp.Data
-
-		ttl, ok := data["ttl"]
-		if !ok {
-			t.Fatal("configuration does not contain ttl")
-		}
+		ttl := getTTL(resp.Data, t)
 
 		expectedTTL := 1 * time.Hour
 		if ttl != expectedTTL {
 			t.Error("ttl is not the default value. Expected:", expectedTTL, "Actual:", ttl)
 		}
 	})
+
+	t.Run("max_ttl not set, config contains zero max_ttl", func(t *testing.T) {
+		t.Parallel()
+		b, storage := testBackend(t)
+		config := storeDefaultConfig(t, b, storage)
+
+		resp := requestConfig(t, b, storage)
+
+		if resp == nil {
+			t.Fatal("configuration", config, "was not saved.")
+		}
+
+		maxTtl := getMaxTTL(resp.Data, t)
+
+		expectedTTL := time.Duration(0)
+		if maxTtl != expectedTTL {
+			t.Error("max_ttl is not the default value. Expected:", expectedTTL, "Actual:", maxTtl)
+		}
+	})
+
+	t.Run("set max_ttl", func(t *testing.T) {
+		t.Parallel()
+		b, storage := testBackend(t)
+		config := map[string]interface{}{
+			"api_key": "apiKey123",
+			"domain":  "example.com",
+			"max_ttl": "1h",
+		}
+		storeConfig(config, t, b, storage)
+
+		resp := requestConfig(t, b, storage)
+
+		if resp == nil {
+			t.Fatal("configuration", config, "was not saved.")
+		}
+
+		ttl := getMaxTTL(resp.Data, t)
+
+		expectedTTL := time.Duration(1) * time.Hour
+		if ttl != expectedTTL {
+			t.Error("max_ttl is not the default value. Expected:", expectedTTL, "Actual:", ttl)
+		}
+	})
+}
+
+func getTTL(data map[string]interface{}, t *testing.T) time.Duration {
+	ttlRaw, ok := data["ttl"]
+	if !ok {
+		t.Fatal("configuration does not contain ttl")
+	}
+	ttl := time.Duration(ttlRaw.(int64)) * time.Second
+	return ttl
+}
+
+func getMaxTTL(data map[string]interface{}, t *testing.T) time.Duration {
+	ttlRaw, ok := data["max_ttl"]
+	if !ok {
+		t.Fatal("configuration does not contain max_ttl")
+	}
+	ttl := time.Duration(ttlRaw.(int64)) * time.Second
+	return ttl
 }
 
 var defaultConfig = map[string]interface{}{
