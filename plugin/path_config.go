@@ -4,6 +4,11 @@ import (
 	"context"
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
+	"time"
+)
+
+const (
+	defaultTTL = "10m"
 )
 
 func pathConfig(b *backend) *framework.Path {
@@ -17,6 +22,11 @@ func pathConfig(b *backend) *framework.Path {
 			"domain": {
 				Type:        framework.TypeString,
 				Description: "Required. Domain to generate SMTP credentials for",
+			},
+			"ttl": {
+				Type:        framework.TypeDurationSecond,
+				Description: "The Time to live (TTL) of the generated credentials",
+				Default:     defaultTTL,
 			},
 		},
 
@@ -48,6 +58,7 @@ func (b *backend) pathConfigRead(ctx context.Context, req *logical.Request, data
 	return &logical.Response{
 		Data: map[string]interface{}{
 			"domain": cfg.Domain,
+			"ttl":    cfg.TTL,
 		},
 	}, nil
 }
@@ -75,6 +86,9 @@ func (b *backend) pathConfigWrite(ctx context.Context, req *logical.Request, dat
 	domain := domainRaw.(string)
 	cfg.Domain = domain
 
+	ttlRaw := data.Get("ttl")
+	cfg.TTL = time.Duration(ttlRaw.(int)) * time.Second
+
 	client := b.MailgunFactory(domain, apiKey)
 	if !client.IsApiKeyValid() {
 		return logical.ErrorResponse("'api_key' is not valid."), nil
@@ -98,6 +112,7 @@ func (b *backend) pathConfigWrite(ctx context.Context, req *logical.Request, dat
 type config struct {
 	ApiKey string
 	Domain string
+	TTL    time.Duration
 }
 
 func getConfig(ctx context.Context, s logical.Storage) (*config, error) {
