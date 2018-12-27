@@ -144,7 +144,35 @@ func TestPathConfig(t *testing.T) {
 			t.Error("ttl is not the default value. Expected:", expectedTTL, "Actual:", ttl)
 		}
 	})
-	// TODO Add test to set TTL
+
+	t.Run("set ttl", func(t *testing.T) {
+		t.Parallel()
+		b, storage := testBackend(t)
+		config := map[string]interface{}{
+			"api_key": "apiKey123",
+			"domain":  "example.com",
+			"ttl":     "1h",
+		}
+		storeConfig(config, t, b, storage)
+
+		resp := requestConfig(t, b, storage)
+
+		if resp == nil {
+			t.Fatal("configuration", config, "was not saved.")
+		}
+
+		data := resp.Data
+
+		ttl, ok := data["ttl"]
+		if !ok {
+			t.Fatal("configuration does not contain ttl")
+		}
+
+		expectedTTL := 1 * time.Hour
+		if ttl != expectedTTL {
+			t.Error("ttl is not the default value. Expected:", expectedTTL, "Actual:", ttl)
+		}
+	})
 }
 
 var defaultConfig = map[string]interface{}{
@@ -173,28 +201,6 @@ func testBackend(tb testing.TB) (*backend, logical.Storage) {
 	return backend, config.StorageView
 }
 
-func testMailgunClientFactory(_, _ string) MailgunClient {
-	return testMailgunClient{}
-}
-
-type testMailgunClient struct{}
-
-func (c testMailgunClient) IsDomainValid() bool {
-	return true
-}
-
-func (c testMailgunClient) IsApiKeyValid() bool {
-	return true
-}
-
-func (c testMailgunClient) DeleteCredential(username string) error {
-	return nil
-}
-
-func (c testMailgunClient) CreateCredential(login, password string) error {
-	return nil
-}
-
 func requestConfig(t *testing.T, b *backend, storage logical.Storage) *logical.Response {
 	resp, err := b.HandleRequest(context.Background(), &logical.Request{
 		Storage:   storage,
@@ -218,4 +224,26 @@ func storeConfig(config map[string]interface{}, t *testing.T, b *backend, storag
 		t.Fatal(err)
 	}
 	return response
+}
+
+func testMailgunClientFactory(_, _ string) MailgunClient {
+	return testMailgunClient{}
+}
+
+type testMailgunClient struct{}
+
+func (c testMailgunClient) IsDomainValid() bool {
+	return true
+}
+
+func (c testMailgunClient) IsApiKeyValid() bool {
+	return true
+}
+
+func (c testMailgunClient) DeleteCredential(username string) error {
+	return nil
+}
+
+func (c testMailgunClient) CreateCredential(login, password string) error {
+	return nil
 }
