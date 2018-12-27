@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/vault/logical/framework"
 )
 
-// TODO: Add TTL?
 func pathConfig(b *backend) *framework.Path {
 	return &framework.Path{
 		Pattern: "config",
@@ -48,11 +47,12 @@ func (b *backend) pathConfigRead(ctx context.Context, req *logical.Request, data
 
 	return &logical.Response{
 		Data: map[string]interface{}{
-			"domain":  cfg.Domain,
+			"domain": cfg.Domain,
 		},
 	}, nil
 }
 
+// TODO verify credentials
 func (b *backend) pathConfigWrite(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 	cfg, err := getConfig(ctx, req.Storage)
 	if err != nil {

@@ -9,12 +9,12 @@ import (
 	"github.com/hashicorp/vault/logical/framework"
 	"github.com/hashicorp/vault/plugins/helper/database/credsutil"
 	"github.com/mailgun/mailgun-go"
+	"strings"
 	"time"
 )
 
 const (
 	SecretTypeSmtpCredentials = "smtp_credential_key"
-	// TODO make user prefix configurable
 	vaultUserPrefix           = "vault"
 	internalDataUser          = "user_name"
 )
@@ -37,11 +37,11 @@ func secretCredentials(b *backend) *framework.Secret {
 		Fields: map[string]*framework.FieldSchema{
 			"username": {
 				Type:        framework.TypeString,
-				Description: "TODO",
+				Description: "The SMTP username for mailgun.",
 			},
 			"password": {
 				Type:        framework.TypeString,
-				Description: "TODO",
+				Description: "The SMTP password for mailgun.",
 			},
 		},
 		Renew:  b.secretCredentialsRenew,
@@ -63,21 +63,18 @@ func (b *backend) secretCredentialsRevoke(ctx context.Context, req *logical.Requ
 	if !ok {
 		return nil, fmt.Errorf("no internal user name found")
 	}
-	b.Logger().Info("Revoking credential", "username", username)
-	// TODO: Refactor to reduce duplication
-	config, err := getConfig(ctx, req.Storage)
-	if err != nil {
-		return nil, errwrap.Wrapf("Unable to get configuration: {{err}}", err)
-	}
 
-	if config == nil {
-		return logical.ErrorResponse("Mailgun plugin is not configured."), nil
+	b.Logger().Info("Revoking credential", "username", username)
+
+	config, err := getConfig(ctx, req.Storage)
+	if ok, response, err := handleGetConfig(err, config); !ok {
+		return response, err
 	}
 
 	mgClient := mailgun.NewMailgun(config.Domain, config.ApiKey)
 
 	if err = mgClient.DeleteCredential(username.(string)); err != nil {
-		return logical.ErrorResponse(fmt.Sprintf("Unable to create credentials in mailgun: %v", err)), nil
+		return logical.ErrorResponse("Unable to create credentials in mailgun. Configure with valid credentials"), nil
 	}
 
 	return nil, nil
@@ -85,25 +82,20 @@ func (b *backend) secretCredentialsRevoke(ctx context.Context, req *logical.Requ
 
 func (b *backend) generateCredentials(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	config, err := getConfig(ctx, req.Storage)
-	if err != nil {
-		return nil, errwrap.Wrapf("Unable to get configuration: {{err}}", err)
+	if ok, response, err := handleGetConfig(err, config); !ok {
+		return response, err
 	}
 
-	if config == nil {
-		return logical.ErrorResponse("Mailgun plugin is not configured."), nil
-	}
-
-	// TODO make password length configurable
 	password, err := credsutil.RandomAlphaNumeric(32, false)
 	if err != nil {
 		return nil, errwrap.Wrapf("Unable to create random password: {{err}}", err)
 	}
 
-	// TODO make user suffix length configurable
 	userSuffix, err := base62.Random(5, true)
 	if err != nil {
 		return nil, errwrap.Wrapf("Unable to create unique, random username: {{err}}", err)
 	}
+	userSuffix = strings.ToLower(userSuffix)
 
 	username := fmt.Sprintf("%v.%v", vaultUserPrefix, userSuffix)
 
@@ -129,4 +121,14 @@ func (b *backend) generateCredentials(ctx context.Context, req *logical.Request,
 	resp.Secret.MaxTTL = 3 * time.Minute
 	resp.Secret.Renewable = true
 	return resp, nil
+}
+
+func handleGetConfig(err error, config *config) (bool, *logical.Response, error) {
+	if err != nil {
+		return false, nil, errwrap.Wrapf("Unable to get configuration: {{err}}", err)
+	}
+	if config == nil {
+		return false, logical.ErrorResponse("Mailgun plugin is not configured."), nil
+	}
+	return true, nil, nil
 }
