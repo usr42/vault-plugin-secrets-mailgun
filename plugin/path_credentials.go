@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
 	"github.com/hashicorp/vault/plugins/helper/database/credsutil"
-	"github.com/mailgun/mailgun-go"
 	"strings"
 	"time"
 )
@@ -71,9 +70,9 @@ func (b *backend) secretCredentialsRevoke(ctx context.Context, req *logical.Requ
 		return response, err
 	}
 
-	mgClient := mailgun.NewMailgun(config.Domain, config.ApiKey)
+	client := b.MailgunFactory(config.Domain, config.ApiKey)
 
-	if err = mgClient.DeleteCredential(username.(string)); err != nil {
+	if err = client.DeleteCredential(username.(string)); err != nil {
 		return logical.ErrorResponse("Unable to create credentials in mailgun. Configure with valid credentials"), nil
 	}
 
@@ -99,9 +98,9 @@ func (b *backend) generateCredentials(ctx context.Context, req *logical.Request,
 
 	username := fmt.Sprintf("%v.%v", vaultUserPrefix, userSuffix)
 
-	mgClient := mailgun.NewMailgun(config.Domain, config.ApiKey)
+	client := b.MailgunFactory(config.Domain, config.ApiKey)
 
-	if err = mgClient.CreateCredential(username, password); err != nil {
+	if err = client.CreateCredential(username, password); err != nil {
 		return logical.ErrorResponse(fmt.Sprintf("Unable to create credentials in mailgun: %v", err)), nil
 	}
 

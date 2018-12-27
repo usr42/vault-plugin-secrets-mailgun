@@ -12,11 +12,11 @@ func pathConfig(b *backend) *framework.Path {
 		Fields: map[string]*framework.FieldSchema{
 			"api_key": {
 				Type:        framework.TypeString,
-				Description: `Mailgun API Key`,
+				Description: `Required. Mailgun API Key`,
 			},
 			"domain": {
 				Type:        framework.TypeString,
-				Description: "Domain to generate SMTP credentials for",
+				Description: "Required. Domain to generate SMTP credentials for",
 			},
 		},
 
@@ -52,7 +52,6 @@ func (b *backend) pathConfigRead(ctx context.Context, req *logical.Request, data
 	}, nil
 }
 
-// TODO verify credentials
 func (b *backend) pathConfigWrite(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 	cfg, err := getConfig(ctx, req.Storage)
 	if err != nil {
@@ -62,14 +61,26 @@ func (b *backend) pathConfigWrite(ctx context.Context, req *logical.Request, dat
 		cfg = &config{}
 	}
 
-	apiKey, ok := data.GetOk("api_key")
-	if ok {
-		cfg.ApiKey = apiKey.(string)
+	apiKeyRaw, ok := data.GetOk("api_key")
+	if !ok {
+		return logical.ErrorResponse("Required field 'api_key' is not set."), nil
 	}
+	apiKey := apiKeyRaw.(string)
+	cfg.ApiKey = apiKey
 
-	domain, ok := data.GetOk("domain")
-	if ok {
-		cfg.Domain = domain.(string)
+	domainRaw, ok := data.GetOk("domain")
+	if !ok {
+		return logical.ErrorResponse("Required field 'domain' is not set."), nil
+	}
+	domain := domainRaw.(string)
+	cfg.Domain = domain
+
+	client := b.MailgunFactory(domain, apiKey)
+	if !client.IsApiKeyValid() {
+		return logical.ErrorResponse("'api_key' is not valid."), nil
+	}
+	if !client.IsDomainValid() {
+		return logical.ErrorResponse("'domain' is not valid."), nil
 	}
 
 	entry, err := logical.StorageEntryJSON("config", cfg)
