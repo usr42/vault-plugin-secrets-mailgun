@@ -17,10 +17,12 @@ func Factory(ctx context.Context, conf *logical.BackendConfig) (logical.Backend,
 
 type backend struct {
 	*framework.Backend
+	MailgunFactory func(domain, apiKey string) MailgunClient
 }
 
 func Backend() *backend {
 	var b backend
+	b.MailgunFactory = DefaultMailgunClientFactory
 	b.Backend = &framework.Backend{
 		Help: strings.TrimSpace(backendHelp),
 		PathsSpecial: &logical.Paths{
