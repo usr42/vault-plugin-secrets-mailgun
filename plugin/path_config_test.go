@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/hashicorp/vault/logical"
 	"testing"
+	"time"
 )
 
 func TestPathConfig(t *testing.T) {
@@ -74,7 +75,7 @@ func TestPathConfig(t *testing.T) {
 		}
 	})
 
-	t.Run("saving domain and api_key", func(t *testing.T) {
+	t.Run("saving config, contains domain", func(t *testing.T) {
 		t.Parallel()
 		b, storage := testBackend(t)
 		expectedDomain := "example.com"
@@ -101,6 +102,60 @@ func TestPathConfig(t *testing.T) {
 			t.Error("api_key must not be readable, but was:", apiKey)
 		}
 	})
+
+	t.Run("api_key is not readable in config", func(t *testing.T) {
+		t.Parallel()
+		b, storage := testBackend(t)
+		config := storeDefaultConfig(t, b, storage)
+
+		resp := requestConfig(t, b, storage)
+
+		if resp == nil {
+			t.Fatal("configuration", config, "was not saved.")
+		}
+
+		data := resp.Data
+
+		if apiKey, ok := data["api_key"]; ok {
+			t.Error("api_key must not be readable, but was:", apiKey)
+		}
+	})
+
+	t.Run("config contains ttl", func(t *testing.T) {
+		t.Parallel()
+		b, storage := testBackend(t)
+		config := storeDefaultConfig(t, b, storage)
+
+		resp := requestConfig(t, b, storage)
+
+		if resp == nil {
+			t.Fatal("configuration", config, "was not saved.")
+		}
+
+		data := resp.Data
+
+		ttl, ok := data["ttl"]
+		if !ok {
+			t.Fatal("configuration does not contain ttl")
+		}
+
+		expectedTTL := 10 * time.Minute
+		if ttl != expectedTTL {
+			t.Error("ttl is not the default value. Expected:", expectedTTL, "Actual:", ttl)
+		}
+	})
+	// TODO Add test to set TTL
+}
+
+var defaultConfig = map[string]interface{}{
+	"api_key": "apiKey123",
+	"domain":  "example.com",
+}
+
+func storeDefaultConfig(t *testing.T, b *backend, storage logical.Storage) map[string]interface{} {
+	config := defaultConfig
+	storeConfig(config, t, b, storage)
+	return config
 }
 
 func testBackend(tb testing.TB) (*backend, logical.Storage) {
