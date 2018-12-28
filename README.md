@@ -1,8 +1,6 @@
 # vault-plugin-secrets-mailgun
 [![Build Status](https://travis-ci.org/usr42/vault-plugin-secrets-mailgun.svg?branch=master)](https://travis-ci.org/usr42/vault-plugin-secrets-mailgun)
 
-**This plugin is still in development and the API might still change.**
-
 This is a backend plugin to be used with
 [Hashicorp Vault](https://www.github.com/hashicorp/vault).
 It creates dynamic [mailgun](https://www.mailgun.com/) SMTP credentials
