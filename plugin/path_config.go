@@ -2,13 +2,10 @@ package mgsecret
 
 import (
 	"context"
+	"fmt"
 	"github.com/hashicorp/vault/logical"
 	"github.com/hashicorp/vault/logical/framework"
 	"time"
-)
-
-const (
-	defaultTTL = "10m"
 )
 
 func pathConfig(b *backend) *framework.Path {
@@ -18,10 +15,12 @@ func pathConfig(b *backend) *framework.Path {
 			"api_key": {
 				Type:        framework.TypeString,
 				Description: `Required. Mailgun API Key`,
+				Required:    true,
 			},
 			"domain": {
 				Type:        framework.TypeString,
 				Description: "Required. Domain to generate SMTP credentials for",
+				Required:    true,
 			},
 			"ttl": {
 				Type:        framework.TypeDurationSecond,
@@ -76,18 +75,16 @@ func (b *backend) pathConfigWrite(ctx context.Context, req *logical.Request, dat
 		cfg = &config{}
 	}
 
-	apiKeyRaw, ok := data.GetOk("api_key")
-	if !ok {
-		return logical.ErrorResponse("Required field 'api_key' is not set."), nil
+	apiKey, resp := GetFieldString("api_key", data)
+	if resp != nil {
+		return resp, nil
 	}
-	apiKey := apiKeyRaw.(string)
 	cfg.ApiKey = apiKey
 
-	domainRaw, ok := data.GetOk("domain")
-	if !ok {
-		return logical.ErrorResponse("Required field 'domain' is not set."), nil
+	domain, resp := GetFieldString("domain", data)
+	if resp != nil {
+		return resp, nil
 	}
-	domain := domainRaw.(string)
 	cfg.Domain = domain
 
 	// Update token TTL.
@@ -142,6 +139,14 @@ func getConfig(ctx context.Context, s logical.Storage) (*config, error) {
 	}
 
 	return &cfg, err
+}
+
+func GetFieldString(key string, fields *framework.FieldData) (string, *logical.Response) {
+	valueRaw, ok := fields.GetOk(key)
+	if !ok {
+		return "", logical.ErrorResponse(fmt.Sprintf("Required field '%s' is not set.", key))
+	}
+	return valueRaw.(string), nil
 }
 
 const pathConfigHelpSyn = `
