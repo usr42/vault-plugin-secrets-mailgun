@@ -1,7 +1,7 @@
 # vault-plugin-secrets-mailgun
 [![Build Status](https://travis-ci.org/usr42/vault-plugin-secrets-mailgun.svg?branch=master)](https://travis-ci.org/usr42/vault-plugin-secrets-mailgun)
 
-**This plugin is still in development. Don't use it in production, yet.**
+**This plugin is still in development and the API might still change.**
 
 This is a backend plugin to be used with
 [Hashicorp Vault](https://www.github.com/hashicorp/vault).
@@ -60,7 +60,6 @@ catalog.
          command="vault-plugin-secrets-mailgun"
      ```
 
-
 4. Mount the plugin:
 
     ```sh
@@ -69,3 +68,17 @@ catalog.
         -plugin-name="mailgun" \
         plugin
     ```
+
+### Configure Mailgun
+
+Every plugin instance (here we used the path `mailgun/`) has to be configured
+with one of your Mailgun domains and your Mailgun API key. Your domains can be
+found on the [Mailgun Domains page](https://app.mailgun.com/app/domains/).
+After clicking on one of the domains you see your API Key.
+
+To configure the plugin with the API key `yourapikey` for the domain
+`example.com` run:
+```sh
+vault write mailgun/config api_key=yourapikey domain=example.com
+```
+The domain and the API key have to be valid or the write command will fail.
