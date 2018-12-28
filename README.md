@@ -79,6 +79,33 @@ After clicking on one of the domains you see your API Key.
 To configure the plugin with the API key `yourapikey` for the domain
 `example.com` run:
 ```sh
-vault write mailgun/config api_key=yourapikey domain=example.com
+$ vault write mailgun/config api_key=yourapikey domain=example.com
+Success! Data written to: mailgun/config
 ```
-The domain and the API key have to be valid or the write command will fail.
+The domain and the API key are mandatory and have to be valid or the write
+command will fail.
+
+Additionally you can configure `ttl` (the default TTL for each credential) and
+`max_ttl` (the maximum TTL, even with refresh, for each credential)
+
+If the credential is not refreshed within the TTL it will automatically be
+revoked.
+
+### Usage
+
+After the secrets engine is configured it can generate credentials.
+Generate a new credential by reading from the `/credentials` endpoint:
+
+```sh
+$ vault read mailgun/credentials
+Key                Value
+---                -----
+lease_id           mailgun/credentials/3OYD4hLzGPrKRukI9RKIrFkc
+lease_duration     768h
+lease_renewable    true
+password           5dqbj6YcALoQ3weD9ZDlszJWIpNueOt0
+username           vault.1yrqc@example.com
+```
+
+The credentials can be refreshed or revoked like described in the
+[Vault documentation - Lease, Renew, and Revoke](https://www.vaultproject.io/docs/concepts/lease.html)
