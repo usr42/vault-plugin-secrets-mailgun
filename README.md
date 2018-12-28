@@ -1,8 +1,7 @@
 # vault-plugin-secrets-mailgun
 [![Build Status](https://travis-ci.org/usr42/vault-plugin-secrets-mailgun.svg?branch=master)](https://travis-ci.org/usr42/vault-plugin-secrets-mailgun)
 
-**This plugin is still in early development, not at all feature complete
-or usable. Don't use it in production.**
+**This plugin is still in development. Don't use it in production.**
 
 This is a backend plugin to be used with
 [Hashicorp Vault](https://www.github.com/hashicorp/vault).
