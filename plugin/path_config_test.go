@@ -106,12 +106,12 @@ func TestPathConfig(t *testing.T) {
 	t.Run("api_key is not readable in config", func(t *testing.T) {
 		t.Parallel()
 		b, storage := testBackend(t)
-		config := storeDefaultConfig(t, b, storage)
+		storeDefaultConfig(t, b, storage)
 
 		resp := requestConfig(t, b, storage)
 
 		if resp == nil {
-			t.Fatal("configuration", config, "was not saved.")
+			t.Fatal("configuration was not saved.")
 		}
 
 		data := resp.Data
@@ -124,12 +124,12 @@ func TestPathConfig(t *testing.T) {
 	t.Run("ttl not set, config contains zero ttl", func(t *testing.T) {
 		t.Parallel()
 		b, storage := testBackend(t)
-		config := storeDefaultConfig(t, b, storage)
+		storeDefaultConfig(t, b, storage)
 
 		resp := requestConfig(t, b, storage)
 
 		if resp == nil {
-			t.Fatal("configuration", config, "was not saved.")
+			t.Fatal("configuration was not saved.")
 		}
 
 		ttl := getTTL(resp.Data, t)
@@ -167,12 +167,12 @@ func TestPathConfig(t *testing.T) {
 	t.Run("max_ttl not set, config contains zero max_ttl", func(t *testing.T) {
 		t.Parallel()
 		b, storage := testBackend(t)
-		config := storeDefaultConfig(t, b, storage)
+		storeDefaultConfig(t, b, storage)
 
 		resp := requestConfig(t, b, storage)
 
 		if resp == nil {
-			t.Fatal("configuration", config, "was not saved.")
+			t.Fatal("configuration was not saved.")
 		}
 
 		maxTtl := getMaxTTL(resp.Data, t)
@@ -206,6 +206,32 @@ func TestPathConfig(t *testing.T) {
 			t.Error("max_ttl is not the default value. Expected:", expectedTTL, "Actual:", ttl)
 		}
 	})
+
+	t.Run("saving invalid domain is not allowed", func(t *testing.T) {
+		t.Parallel()
+		b, storage := testBackend(t)
+
+		b.MailgunFactory = generateMailgunClientFactory(false, true)
+
+		response := storeDefaultConfig(t, b, storage)
+
+		if !response.IsError() {
+			t.Error("Saving config with invalid domain was successful")
+		}
+	})
+
+	t.Run("saving invalid api_key is not allowed", func(t *testing.T) {
+		t.Parallel()
+		b, storage := testBackend(t)
+
+		b.MailgunFactory = generateMailgunClientFactory(true, false)
+
+		response := storeDefaultConfig(t, b, storage)
+
+		if !response.IsError() {
+			t.Error("Saving config with invalid api_key was successful")
+		}
+	})
 }
 
 func getTTL(data map[string]interface{}, t *testing.T) time.Duration {
@@ -231,10 +257,9 @@ var defaultConfig = map[string]interface{}{
 	"domain":  "example.com",
 }
 
-func storeDefaultConfig(t *testing.T, b *backend, storage logical.Storage) map[string]interface{} {
+func storeDefaultConfig(t *testing.T, b *backend, storage logical.Storage) *logical.Response {
 	config := defaultConfig
-	storeConfig(config, t, b, storage)
-	return config
+	return storeConfig(config, t, b, storage)
 }
 
 func testBackend(tb testing.TB) (*backend, logical.Storage) {
@@ -248,7 +273,7 @@ func testBackend(tb testing.TB) (*backend, logical.Storage) {
 		tb.Fatal(err)
 	}
 	backend := b.(*backend)
-	backend.MailgunFactory = testMailgunClientFactory
+	backend.MailgunFactory = generateMailgunClientFactory(true, true)
 	return backend, config.StorageView
 }
 
@@ -277,18 +302,22 @@ func storeConfig(config map[string]interface{}, t *testing.T, b *backend, storag
 	return response
 }
 
-func testMailgunClientFactory(_, _ string) MailgunClient {
-	return testMailgunClient{}
+func generateMailgunClientFactory(validDomain, validApiKey bool) func(_, _ string) MailgunClient {
+	return func(_, _ string) MailgunClient {
+		return testMailgunClient{validDomain, validApiKey}
+	}
 }
 
-type testMailgunClient struct{}
+type testMailgunClient struct {
+	validDomain, validApiKey bool
+}
 
 func (c testMailgunClient) IsDomainValid() bool {
-	return true
+	return c.validDomain
 }
 
 func (c testMailgunClient) IsApiKeyValid() bool {
-	return true
+	return c.validApiKey
 }
 
 func (c testMailgunClient) DeleteCredential(username string) error {

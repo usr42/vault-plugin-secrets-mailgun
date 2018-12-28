@@ -50,7 +50,7 @@ func secretCredentials(b *backend) *framework.Secret {
 func (b *backend) secretCredentialsRenew(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	b.Logger().Info("Renewing credential", "username", req.Secret.InternalData[internalDataUser])
 	config, err := getConfig(ctx, req.Storage)
-	if ok, response, err := handleGetConfig(err, config); !ok {
+	if ok, response, err := handleGetConfigErrors(err, config); !ok {
 		return response, err
 	}
 	resp := logical.Response{}
@@ -69,7 +69,7 @@ func (b *backend) secretCredentialsRevoke(ctx context.Context, req *logical.Requ
 	b.Logger().Info("Revoking credential", "username", username)
 
 	config, err := getConfig(ctx, req.Storage)
-	if ok, response, err := handleGetConfig(err, config); !ok {
+	if ok, response, err := handleGetConfigErrors(err, config); !ok {
 		return response, err
 	}
 
@@ -83,26 +83,20 @@ func (b *backend) secretCredentialsRevoke(ctx context.Context, req *logical.Requ
 }
 
 func (b *backend) generateCredentials(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
+	username, err := generateUsername()
+	if err != nil {
+		return nil, err
+	}
+	password, err := generatePassword()
+	if err != nil {
+		return nil, err
+	}
+
 	config, err := getConfig(ctx, req.Storage)
-	if ok, response, err := handleGetConfig(err, config); !ok {
+	if ok, response, err := handleGetConfigErrors(err, config); !ok {
 		return response, err
 	}
-
-	password, err := credsutil.RandomAlphaNumeric(32, false)
-	if err != nil {
-		return nil, errwrap.Wrapf("Unable to create random password: {{err}}", err)
-	}
-
-	userSuffix, err := base62.Random(5, true)
-	if err != nil {
-		return nil, errwrap.Wrapf("Unable to create unique, random username: {{err}}", err)
-	}
-	userSuffix = strings.ToLower(userSuffix)
-
-	username := fmt.Sprintf("%v.%v", vaultUserPrefix, userSuffix)
-
 	client := b.MailgunFactory(config.Domain, config.ApiKey)
-
 	if err = client.CreateCredential(username, password); err != nil {
 		return logical.ErrorResponse(fmt.Sprintf("Unable to create credentials in mailgun: %v", err)), nil
 	}
@@ -123,7 +117,25 @@ func (b *backend) generateCredentials(ctx context.Context, req *logical.Request,
 	return resp, nil
 }
 
-func handleGetConfig(err error, config *config) (bool, *logical.Response, error) {
+func generateUsername() (string, error) {
+	userSuffix, err := base62.Random(5, true)
+	if err != nil {
+		return "", errwrap.Wrapf("Unable to create unique, random username: {{err}}", err)
+	}
+	userSuffix = strings.ToLower(userSuffix)
+	username := fmt.Sprintf("%v.%v", vaultUserPrefix, userSuffix)
+	return username, nil
+}
+
+func generatePassword() (string, error) {
+	password, err := credsutil.RandomAlphaNumeric(32, false)
+	if err != nil {
+		return "", errwrap.Wrapf("Unable to create random password: {{err}}", err)
+	}
+	return password, nil
+}
+
+func handleGetConfigErrors(err error, config *config) (bool, *logical.Response, error) {
 	if err != nil {
 		return false, nil, errwrap.Wrapf("Unable to get configuration: {{err}}", err)
 	}
