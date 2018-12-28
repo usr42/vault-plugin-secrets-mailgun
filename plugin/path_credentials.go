@@ -26,6 +26,8 @@ func pathCredentials(b *backend) *framework.Path {
 				Summary:  "Get mailgun SMTP username and password.",
 			},
 		},
+		HelpSynopsis:    pathCredentialsSyn,
+		HelpDescription: pathCredentialsDesc,
 	}
 }
 
@@ -49,6 +51,7 @@ func secretCredentials(b *backend) *framework.Secret {
 
 func (b *backend) secretCredentialsRenew(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	b.Logger().Info("Renewing credential", "username", req.Secret.InternalData[internalDataUser])
+	// TODO: honor provided increment
 	config, err := getConfig(ctx, req.Storage)
 	if ok, response, err := handleGetConfigErrors(err, config); !ok {
 		return response, err
@@ -144,3 +147,11 @@ func handleGetConfigErrors(err error, config *config) (bool, *logical.Response, 
 	}
 	return true, nil, nil
 }
+
+const pathCredentialsSyn = `Generate Mailgun SMTP username and password.`
+const pathCredentialsDesc = `
+This path will generate new SMTP username and password for Mailgun.
+The Mailgun SMTP server has following settings:
+Server: smtp.mailgun.org
+Ports 25, 587, and 465 (SSL/TLS)
+`
