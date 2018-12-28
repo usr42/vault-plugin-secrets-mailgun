@@ -1,1 +1,2 @@
 * Handle policies
+* Improve documentation
