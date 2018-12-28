@@ -50,16 +50,7 @@ func secretCredentials(b *backend) *framework.Secret {
 }
 
 func (b *backend) secretCredentialsRenew(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
-	b.Logger().Info("Renewing credential", "username", req.Secret.InternalData[internalDataUser])
-	// TODO: honor provided increment
-	config, err := getConfig(ctx, req.Storage)
-	if ok, response, err := handleGetConfigErrors(err, config); !ok {
-		return response, err
-	}
-	resp := logical.Response{}
-	resp.Secret = req.Secret
-	resp.Secret.TTL = config.TTL
-	resp.Secret.MaxTTL = config.MaxTTL
+	resp := logical.Response{Secret: req.Secret}
 	return &resp, nil
 }
 
@@ -68,8 +59,6 @@ func (b *backend) secretCredentialsRevoke(ctx context.Context, req *logical.Requ
 	if !ok {
 		return nil, fmt.Errorf("no internal user name found")
 	}
-
-	b.Logger().Info("Revoking credential", "username", username)
 
 	config, err := getConfig(ctx, req.Storage)
 	if ok, response, err := handleGetConfigErrors(err, config); !ok {
