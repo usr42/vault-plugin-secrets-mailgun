@@ -15,7 +15,7 @@ func TestPathConfig(t *testing.T) {
 		resp := requestConfig(t, b, storage)
 
 		if resp != nil {
-			t.Error("Unexpected intial config:", resp)
+			t.Error("Unexpected initial config:", resp)
 		}
 	})
 
