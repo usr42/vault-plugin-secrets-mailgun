@@ -1,5 +1,6 @@
 # vault-plugin-secrets-mailgun
 [![Build Status](https://travis-ci.org/usr42/vault-plugin-secrets-mailgun.svg?branch=master)](https://travis-ci.org/usr42/vault-plugin-secrets-mailgun)
+[![Go Report Card](https://goreportcard.com/badge/github.com/usr42/vault-plugin-secrets-mailgun)](https://goreportcard.com/report/github.com/usr42/vault-plugin-secrets-mailgun)
 
 This is a backend plugin to be used with
 [Hashicorp Vault](https://www.github.com/hashicorp/vault).
