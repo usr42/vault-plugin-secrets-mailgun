@@ -12,12 +12,12 @@ import (
 )
 
 const (
-	SecretTypeSmtpCredentials = "smtp_credential_key"
+	secretTypeSmtpCredentials = "smtp_credential_key"
 	vaultUserPrefix           = "vault"
 	internalDataUser          = "user_name"
 )
 
-func pathCredentials(b *backend) *framework.Path {
+func pathCredentials(b *mailgunBackend) *framework.Path {
 	return &framework.Path{
 		Pattern: "credentials",
 		Operations: map[logical.Operation]framework.OperationHandler{
@@ -31,9 +31,9 @@ func pathCredentials(b *backend) *framework.Path {
 	}
 }
 
-func secretCredentials(b *backend) *framework.Secret {
+func secretCredentials(b *mailgunBackend) *framework.Secret {
 	return &framework.Secret{
-		Type: SecretTypeSmtpCredentials,
+		Type: secretTypeSmtpCredentials,
 		Fields: map[string]*framework.FieldSchema{
 			"username": {
 				Type:        framework.TypeString,
@@ -49,12 +49,12 @@ func secretCredentials(b *backend) *framework.Secret {
 	}
 }
 
-func (b *backend) secretCredentialsRenew(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
+func (b *mailgunBackend) secretCredentialsRenew(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	resp := logical.Response{Secret: req.Secret}
 	return &resp, nil
 }
 
-func (b *backend) secretCredentialsRevoke(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
+func (b *mailgunBackend) secretCredentialsRevoke(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	username, ok := req.Secret.InternalData[internalDataUser]
 	if !ok {
 		return nil, fmt.Errorf("no internal user name found")
@@ -74,7 +74,7 @@ func (b *backend) secretCredentialsRevoke(ctx context.Context, req *logical.Requ
 	return nil, nil
 }
 
-func (b *backend) generateCredentials(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
+func (b *mailgunBackend) generateCredentials(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	username, err := generateUsername()
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (b *backend) generateCredentials(ctx context.Context, req *logical.Request,
 		internalDataUser: username,
 	}
 
-	secret := b.Secret(SecretTypeSmtpCredentials)
+	secret := b.Secret(secretTypeSmtpCredentials)
 	resp := secret.Response(secretD, internalD)
 	resp.Secret.TTL = config.TTL
 	resp.Secret.MaxTTL = config.MaxTTL

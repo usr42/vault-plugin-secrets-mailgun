@@ -8,20 +8,20 @@ import (
 )
 
 func Factory(ctx context.Context, conf *logical.BackendConfig) (logical.Backend, error) {
-	b := Backend()
+	b := backend()
 	if err := b.Setup(ctx, conf); err != nil {
 		return nil, err
 	}
 	return b, nil
 }
 
-type backend struct {
+type mailgunBackend struct {
 	*framework.Backend
 	MailgunFactory func(domain, apiKey string) MailgunClient
 }
 
-func Backend() *backend {
-	var b backend
+func backend() *mailgunBackend {
+	var b mailgunBackend
 	b.MailgunFactory = DefaultMailgunClientFactory
 	b.Backend = &framework.Backend{
 		Help: strings.TrimSpace(backendHelp),

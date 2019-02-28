@@ -257,12 +257,12 @@ var defaultConfig = map[string]interface{}{
 	"domain":  "example.com",
 }
 
-func storeDefaultConfig(t *testing.T, b *backend, storage logical.Storage) *logical.Response {
+func storeDefaultConfig(t *testing.T, b *mailgunBackend, storage logical.Storage) *logical.Response {
 	config := defaultConfig
 	return storeConfig(config, t, b, storage)
 }
 
-func testBackend(tb testing.TB) (*backend, logical.Storage) {
+func testBackend(tb testing.TB) (*mailgunBackend, logical.Storage) {
 	tb.Helper()
 
 	config := logical.TestBackendConfig()
@@ -272,12 +272,12 @@ func testBackend(tb testing.TB) (*backend, logical.Storage) {
 	if err != nil {
 		tb.Fatal(err)
 	}
-	backend := b.(*backend)
+	backend := b.(*mailgunBackend)
 	backend.MailgunFactory = generateMailgunClientFactory(true, true)
 	return backend, config.StorageView
 }
 
-func requestConfig(t *testing.T, b *backend, storage logical.Storage) *logical.Response {
+func requestConfig(t *testing.T, b *mailgunBackend, storage logical.Storage) *logical.Response {
 	resp, err := b.HandleRequest(context.Background(), &logical.Request{
 		Storage:   storage,
 		Operation: logical.ReadOperation,
@@ -289,7 +289,7 @@ func requestConfig(t *testing.T, b *backend, storage logical.Storage) *logical.R
 	return resp
 }
 
-func storeConfig(config map[string]interface{}, t *testing.T, b *backend, storage logical.Storage) *logical.Response {
+func storeConfig(config map[string]interface{}, t *testing.T, b *mailgunBackend, storage logical.Storage) *logical.Response {
 	response, err := b.HandleRequest(context.Background(), &logical.Request{
 		Storage:   storage,
 		Operation: logical.UpdateOperation,

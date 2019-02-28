@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func pathConfig(b *backend) *framework.Path {
+func pathConfig(b *mailgunBackend) *framework.Path {
 	return &framework.Path{
 		Pattern: "config",
 		Fields: map[string]*framework.FieldSchema{
@@ -48,7 +48,7 @@ func pathConfig(b *backend) *framework.Path {
 	}
 }
 
-func (b *backend) pathConfigRead(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+func (b *mailgunBackend) pathConfigRead(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 	cfg, err := getConfig(ctx, req.Storage)
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func (b *backend) pathConfigRead(ctx context.Context, req *logical.Request, data
 	}, nil
 }
 
-func (b *backend) pathConfigWrite(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
+func (b *mailgunBackend) pathConfigWrite(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 	cfg, err := getConfig(ctx, req.Storage)
 	if err != nil {
 		return nil, err
@@ -75,13 +75,13 @@ func (b *backend) pathConfigWrite(ctx context.Context, req *logical.Request, dat
 		cfg = &config{}
 	}
 
-	apiKey, resp := GetFieldString("api_key", data)
+	apiKey, resp := getFieldString("api_key", data)
 	if resp != nil {
 		return resp, nil
 	}
 	cfg.ApiKey = apiKey
 
-	domain, resp := GetFieldString("domain", data)
+	domain, resp := getFieldString("domain", data)
 	if resp != nil {
 		return resp, nil
 	}
@@ -141,7 +141,7 @@ func getConfig(ctx context.Context, s logical.Storage) (*config, error) {
 	return &cfg, err
 }
 
-func GetFieldString(key string, fields *framework.FieldData) (string, *logical.Response) {
+func getFieldString(key string, fields *framework.FieldData) (string, *logical.Response) {
 	valueRaw, ok := fields.GetOk(key)
 	if !ok {
 		return "", logical.ErrorResponse(fmt.Sprintf("Required field '%s' is not set.", key))
